@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Installation</title>
+<HTA:APPLICATION ID="app"
+	APPLICATIONNAME="Setup Proxy-schan"
+	BORDER="thin"
+	BORDERSTYLE="normal"
+	SINGLEINSTANCE="yes"
+/>
+<link rel="stylesheet" type="text/css" href="css/blueprint/screen.css" media="screen, projection" />
+<link rel="stylesheet" type="text/css" href="css/blueprint/print.css" media="print" />
+<link rel="stylesheet" type="text/css" href="css/blueprint/ie.css" type="text/css" media="screen, projection">
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script type="text/javascript">
+//<![CDATA[
+google.load("jquery", 1)
+google.load("jqueryui", 1)
+//]]>
+</script>
+<script type="text/jscript" src="js/common.js"></script>
+<script type="text/jscript">
+var fso = new ActiveXObject('Scripting.FileSystemObject');
+var shell = new ActiveXObject('WScript.Shell')
+
+function install_to_startup() {
+	var cmdline = GetCmdLineArgs();
+	var script_base = fso.GetParentFolderName(cmdline[0]);
+	var start_folder = shell.SpecialFolders('Startup')
+	var lnk = shell.CreateShortcut(start_folder + '\\Proxy-schan.lnk')
+	lnk.TargetPath = script_base + '\\proxy-schan.js'
+	lnk.WindowStyle = 1
+	lnk.Save()
+}
+
+function install() {
+}
+
+function window.onload() {
+	$('#accordion').accordion({header:'h2', autoHeight:false});
+}
+</script>
+</head>
+<body>
+	<div class="container">
+		<div class="span-24 last">
+			<h1>Proxy-schan Installation</h1>
+		</div>
+		<div id="accordion" class="span-24 last">
+			<h2>Proxy Configuration</h2>
+			<div>
+						<div><label for="SshHost">SSH Host</label></div>
+						<div><input id="SshHost" type="text" name="ssh_host" value=""/></div>
+						<div><label for="SshPort">SSH Port</label></div>
+						<div><input id="SshPort" type="text" name="ssh_port" value="22"/></div>
+						<div><label for="LocalPort">Local Port</label></div>
+						<div><input id="LocalPort" type="text" name="local_port" value="8000"/></div>
+						<div>
+							<input id="InstallToStartup" type="checkbox" checked="checked">
+							<label for="InstallToStartup">Automatic Startup at login</label>
+						</div>
+			</div>
+			<h2>Private Key</h2>
+			<div>
+			</div>
+			<h2>Install</h2>
+			<div>
+				<a onclick="install(); return false" href="#">Proceed and Install</a>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
