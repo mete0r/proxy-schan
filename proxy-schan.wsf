@@ -1,0 +1,30 @@
+<job id="proxy-schan">
+<script language="JScript" src="js/conf.js"></script>
+<script language="JScript" src="js/putty.js"></script>
+<script language="JScript">
+var fso = WScript.CreateObject('Scripting.FileSystemObject');
+var shell = WScript.CreateObject('WScript.Shell')
+var script_base = fso.GetParentFolderName(WScript.ScriptFullName);
+var pageant_path = putty_program_path(fso, 'pageant.exe', script_base);
+if (pageant_path == '') {
+    WScript.echo('pageant not found')
+    WScript.Quit(1);
+}
+
+var conf = read_conf(fso, script_base+'\\conf.txt');
+
+var ppk_path = conf['PPK_FILE'];
+if (!fso.FileExists(ppk_path)) {
+	WScript.echo('ppk not found')
+	WScript.Quit(2);
+}
+
+var plink_script_path = script_base + '\\plink-schan.wsf'
+if (!fso.FileExists(plink_script_path)) {
+	WScript.echo('plink-schan.wsf not found')
+	WScript.Quit(3)
+}
+var cmd = '"'+pageant_path+'" "'+ppk_path+'" -c "'+plink_script_path+'"';
+shell.run(cmd, 1)
+</script>
+</job>

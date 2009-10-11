@@ -1,0 +1,20 @@
+<job id="plink-schan">
+<script language="JScript" src="js/conf.js"></script>
+<script language="JScript" src="js/putty.js"></script>
+<script language="JScript">
+var fso = WScript.CreateObject('Scripting.FileSystemObject');
+var shell = WScript.CreateObject('WScript.Shell');
+var script_base = fso.GetParentFolderName(WScript.ScriptFullName);
+var plink_path = putty_program_path(fso, 'plink.exe', script_base);
+if (plink_path == '') {
+    WScript.echo('plink not found')
+    WScript.Quit(1);
+}
+
+var conf = read_conf(fso, script_base+'\\conf.txt');
+if (conf['SSH_HOST']) {
+	var cmd = plink_path+' -v -N -D '+conf['LOCAL_PORT']+' -agent -l '+conf['SSH_USER']+' -P '+conf['SSH_PORT']+' '+conf['SSH_HOST']
+	shell.run(cmd, 7)
+}
+</script>
+</job>
