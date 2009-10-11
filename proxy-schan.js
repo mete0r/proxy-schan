@@ -11,7 +11,6 @@ if (!fso.FileExists(pageant_path)) {
 var shell = WScript.CreateObject('WScript.Shell')
 var env = shell.Environment('PROCESS')
 var my_documents_path = shell.SpecialFolders('MyDocuments')
-var home_path = env('HOMEDRIVE')+env('HOMEPATH')
 
 var ppk_path = my_documents_path + '\\schan.ppk'
 if (!fso.FileExists(ppk_path)) {
@@ -26,6 +25,3 @@ if (!fso.FileExists(plink_script_path)) {
 }
 var cmd = '"'+pageant_path+'" "'+ppk_path+'" -c "'+plink_script_path+'"';
 shell.run(cmd, 1)
-
-//var start_folder = shell.SpecialFolders('Start')
-

@@ -1,6 +1,6 @@
-function GetCmdLineArgs() {
+function GetCmdLineArgs(hta) {
 	var args = [];
-	var cmdline = app.commandLine
+	var cmdline = hta.commandLine
 	var s = cmdline
 	var i
 

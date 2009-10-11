@@ -6,31 +6,26 @@ var script_path = fso.GetParentFolderName(WScript.ScriptFullName);
 
 var conf_path = script_path
 
-var conf = new ActiveXObject('Scripting.Dictionary')
-var conf_filename = conf_path+'\\conf.txt';
-if (fso.FileExists(conf_filename)) {
-	var f = fso.OpenTextFile(conf_filename, 1)
-	while (!f.AtEndOfStream) {
-		var line = f.ReadLine()
-		var r = new RegExp(' *([^= ]+) *= *(.*)')
-		var m = r.exec(line)
-		if (m == null) {
-			WScript.echo('no match')
-		} else {
-			//WScript.echo(m[1]);
-			//WScript.echo(m[2]);
-			conf.add(m[1], m[2])
+function read_conf(filename) {
+	var conf = {}
+	if (fso.FileExists(filename)) {
+		var f = fso.OpenTextFile(filename, 1)
+		while (!f.AtEndOfStream) {
+			var line = f.ReadLine()
+			var r = new RegExp(' *([^= ]+) *= *(.*)')
+			var m = r.exec(line)
+			if (m) {
+				conf[m[1]] = m[2];
+			}
 		}
+		f.Close();
 	}
-	f.Close()
+	return conf;
 }
-if (!conf.Exists('SSH_PORT')) {
-	conf.add('SSH_PORT', '22')
-}
-if (!conf.Exists('LOCAL_PORT')) {
-	conf.add('LOCAL_PORT', '8000')
-}
-if (conf.Exists('SSH_HOST')) {
-	var cmd = plink_path+' -v -N -D '+conf('LOCAL_PORT')+' -agent -P '+conf('SSH_PORT')+' '+conf('SSH_HOST')
+
+var conf_filename = conf_path+'\\conf.txt';
+var conf = read_conf(conf_filename);
+if (conf['SSH_HOST']) {
+	var cmd = plink_path+' -v -N -D '+conf['LOCAL_PORT']+' -agent -l '+conf['SSH_USER']+' -P '+conf['SSH_PORT']+' '+conf['SSH_HOST']
 	shell.run(cmd, 7)
 }

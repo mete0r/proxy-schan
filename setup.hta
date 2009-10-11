@@ -3,7 +3,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Installation</title>
-<HTA:APPLICATION ID="app"
+<HTA:APPLICATION ID="oHTA"
 	APPLICATIONNAME="Setup Proxy-schan"
 	BORDER="thin"
 	BORDERSTYLE="normal"
@@ -12,21 +12,20 @@
 <link rel="stylesheet" type="text/css" href="css/blueprint/screen.css" media="screen, projection" />
 <link rel="stylesheet" type="text/css" href="css/blueprint/print.css" media="print" />
 <link rel="stylesheet" type="text/css" href="css/blueprint/ie.css" type="text/css" media="screen, projection">
-<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<link type="text/css" href="css/ui-lightness/jquery-ui-1.7.2.custom.css" rel="stylesheet" />	
+<script type="text/javascript" src="js/json2.js"></script>
+<script type="text/javascript" src="js/base64.js"></script>
+<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.7.2.custom.min.js"></script>
+<script type="text/javascript" src="js/common.js"></script>
 <script type="text/javascript">
-//<![CDATA[
-google.load("jquery", 1)
-google.load("jqueryui", 1)
-//]]>
-</script>
-<script type="text/jscript" src="js/common.js"></script>
-<script type="text/jscript">
 var fso = new ActiveXObject('Scripting.FileSystemObject');
-var shell = new ActiveXObject('WScript.Shell')
+var shell = new ActiveXObject('WScript.Shell');
+var script_base = fso.GetParentFolderName(GetCmdLineArgs(oHTA)[0]);
+var proxies = {};
+var proxies_url = 'https://madang.sarangbang.or.kr/schan';
 
 function install_to_startup() {
-	var cmdline = GetCmdLineArgs();
-	var script_base = fso.GetParentFolderName(cmdline[0]);
 	var start_folder = shell.SpecialFolders('Startup')
 	var lnk = shell.CreateShortcut(start_folder + '\\Proxy-schan.lnk')
 	lnk.TargetPath = script_base + '\\proxy-schan.js'
@@ -34,41 +33,104 @@ function install_to_startup() {
 	lnk.Save()
 }
 
-function install() {
+function save_conf() {
+	var conf = {}
+	conf['LOCAL_PORT'] = $('#LocalPort').attr('value');
+	conf['SSH_HOST'] = $('#SshHost').attr('value');
+	conf['SSH_PORT'] = $('#SshPort').attr('value');
+	conf['SSH_USER'] = $('#SshUser').attr('value');
+	conf['PPK_FILE'] = $('#PpkFile').attr('value');
+
+	var f = fso.CreateTextFile(script_base+'\\conf.txt', true);
+	for (key in conf) {
+		f.WriteLine(key+'='+conf[key]);
+	}
+	f.close();
 }
 
-function window.onload() {
-	$('#accordion').accordion({header:'h2', autoHeight:false});
+function save_hostkey() {
+	var value = $('#SshHostKey').html();
+	var key = 'rsa2@'+$('#SshPort').attr('value')+':'+$('#SshHost').attr('value');
+	shell.RegWrite('HKEY_CURRENT_USER\\Software\\SimonTatham\\PuTTY\\SshHostKeys\\'+key, value, 'REG_SZ');
 }
+
+function install() {
+	save_conf();
+	save_hostkey();
+}
+
+function select_ppk_file(e) {
+	var cmmdlg = new ActiveXObject('UserAccounts.CommonDialog');
+	cmmdlg.Filter = 'PuTTY Private Key File(*.ppk)|*.ppk|All Files(*.*)|*.*';
+	cmmdlg.FilterIndex = 1;
+	if (cmmdlg.ShowOpen()) {
+		e.value = cmmdlg.FileName;
+	}
+}
+
+function generate_ppk() {
+}
+
+$(function(){
+	$('#tabs').tabs();
+	$.getJSON(proxies_url, function(data, status) {
+		if (status == 'success') {
+			var key;
+			var i;
+			for (i=0;i<data.length;++i) {
+				key = data[i].SSH_USER+'@'+data[i].SSH_HOST+':'+data[i].SSH_PORT;
+				proxies[key] = data[i];
+				$('#proxies').append('<li>'+key+'</li>');
+			}
+		}
+	});
+})
 </script>
+<style type="text/css">
+a.button {
+	display:block;
+	padding:.5em;
+	text-align:center;
+}
+#tabs-1 label {
+	display:block;
+}
+#tabs-1 input {
+	display:block;
+}
+</style>
 </head>
 <body>
 	<div class="container">
 		<div class="span-24 last">
 			<h1>Proxy-schan Installation</h1>
 		</div>
-		<div id="accordion" class="span-24 last">
-			<h2>Proxy Configuration</h2>
-			<div>
-						<div><label for="SshHost">SSH Host</label></div>
-						<div><input id="SshHost" type="text" name="ssh_host" value=""/></div>
-						<div><label for="SshPort">SSH Port</label></div>
-						<div><input id="SshPort" type="text" name="ssh_port" value="22"/></div>
-						<div><label for="LocalPort">Local Port</label></div>
-						<div><input id="LocalPort" type="text" name="local_port" value="8000"/></div>
-						<div>
-							<input id="InstallToStartup" type="checkbox" checked="checked">
-							<label for="InstallToStartup">Automatic Startup at login</label>
-						</div>
+		<div id="tabs" class="span-24 last">
+			<ul>
+				<li><a href="#tabs-1">Step 1: Proxy Configuration</a></li>
+				<li><a href="#tabs-2">Step 2: My Private Key</a></li>
+				<li><a href="#tabs-3">Step 3: Install</a></li>
+			</ul>
+			<div id="tabs-1">
+				<label for="LocalPort">Local Port</label>
+				<input id="LocalPort" type="text" name="local_port" value="8000"/>
+				<ul id="proxies"></ul>
 			</div>
-			<h2>Private Key</h2>
-			<div>
+			<div id="tabs-2">
+				<input id="PpkFile" onclick="select_ppk_file(this)" type="text" readonly="readonly"/>
+				<a class="button ui-state-default" onclick="generate_ppk()" href="#">I don't have any private key, so generate it now!</a>
 			</div>
-			<h2>Install</h2>
-			<div>
-				<a onclick="install(); return false" href="#">Proceed and Install</a>
+			<div id="tabs-3">
+				<div>
+					<input id="InstallToStartup" type="checkbox" checked="checked">
+					<label for="InstallToStartup">Automatic Startup at login</label>
+				</div>
+				<div>
+					<a class="button ui-state-default span-4 last" onclick="install(); return false" href="#">Proceed and Install</a>
+				</div>
 			</div>
 		</div>
 	</div>
 </body>
 </html>
+<!-- vi:set ts=2 sw=2 number: -->
