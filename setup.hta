@@ -23,7 +23,6 @@ var fso = new ActiveXObject('Scripting.FileSystemObject');
 var shell = new ActiveXObject('WScript.Shell');
 var script_base = fso.GetParentFolderName(GetCmdLineArgs(oHTA)[0]);
 var proxies = {};
-var proxies_url = 'https://madang.sarangbang.or.kr/schan';
 
 function install_to_startup() {
 	var start_folder = shell.SpecialFolders('Startup')
@@ -68,22 +67,29 @@ function select_ppk_file(e) {
 	}
 }
 
+function read_proxies() {
+	try {
+		var f = fso.OpenTextFile('proxies.js', 1);
+		var js = f.ReadAll();
+		var data = JSON.parse(js);
+	} catch (e) {
+		window.alert(e.name + ':' + e.message);
+		var data = []
+	}
+	var i;
+	for (i=0;i<data.length;++i) {
+		key = data[i].SSH_USER+'@'+data[i].SSH_HOST+':'+data[i].SSH_PORT;
+		proxies[key] = data[i];
+		$('#proxies').append('<li>'+key+'</li>');
+	}
+}
+
 function generate_ppk() {
 }
 
 $(function(){
 	$('#tabs').tabs();
-	$.getJSON(proxies_url, function(data, status) {
-		if (status == 'success') {
-			var key;
-			var i;
-			for (i=0;i<data.length;++i) {
-				key = data[i].SSH_USER+'@'+data[i].SSH_HOST+':'+data[i].SSH_PORT;
-				proxies[key] = data[i];
-				$('#proxies').append('<li>'+key+'</li>');
-			}
-		}
-	});
+	read_proxies();
 })
 </script>
 <style type="text/css">
